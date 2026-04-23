@@ -1,0 +1,44 @@
+global proc PathLocator() {}; // dummy to help find the path of the tool
+string $installFileInfo = `whatIs PathLocator`; // gives info about what is PathLocator 
+string $installerPath = `substring $installFileInfo 25 999`; // getting path part of the installFileInfo
+string $pluginDir = `dirname $installerPath`;
+
+string $SRCDir = $pluginDir + "/SCR/";
+string $toolDir = $SRCDir + "/tools/";
+string $assetDir = $pluginDir + "/assets/";
+string $defaultIconName = "defult.png"; 
+
+global proc string GetIconPathFromScript(string $scriptName)
+{
+    global string $assetDir;
+    string $iconPath = $assetDir + $scriptName + ".png";
+    if(`filetest -f $iconPath`)
+    {
+        return $iconPath;
+    }
+    global string $defaultIconName;
+    return $assetDir + $defaultIconName;
+}
+
+
+global proc AddPluginToShelf(string $scriptName, string $label )
+{
+    global string $SRCDir;
+    global string $toolDir;
+    global string $assetDir;
+
+    string $iconPath = GetIconPathFromScript($scriptName);
+
+    string $addPathCmd = "import sys\n";
+    $addPathCmd += "if \"" + $SRCDir + "\" not in sys.path:\n";
+    $addPathCmd += "\tsys.path.append(\""+ $SRCDir + "\")\n";
+
+    string $command = $addPathCmd + "exec(open(\"" + $toolDir + $scriptName + ".py" + "\").read())";
+
+    string $currentShelf = `tabLayout -q -selectTab "ShelfLayout"`;
+    setParent $currentShelf;
+
+    shelfButton -c $command -stp "python" -image $iconPath -l $label -iol $label;
+}
+
+AddPluginToShelf("limbRigger", "Limb Rigger");
